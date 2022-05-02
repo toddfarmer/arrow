@@ -81,6 +81,11 @@ cdef extern from "arrow/config.h" namespace "arrow" nogil:
     CRuntimeInfo GetRuntimeInfo()
 
 
+cdef extern from "arrow/util/future.h" namespace "arrow" nogil:
+    cdef cppclass CFuture_Void" arrow::Future<>":
+        CStatus status()
+
+
 cdef extern from "arrow/api.h" namespace "arrow" nogil:
     cdef enum Type" arrow::Type::type":
         _Type_NA" arrow::Type::NA"
@@ -2442,9 +2447,8 @@ cdef extern from "arrow/compute/exec/options.h" namespace "arrow::compute" nogil
     cdef cppclass CExecNodeOptions "arrow::compute::ExecNodeOptions":
         pass
 
-    cdef cppclass CSourceNodeOptions "arrow::compute::SourceNodeOptions"(CExecNodeOptions):
-        @staticmethod
-        CResult[shared_ptr[CSourceNodeOptions]] FromTable(const CTable& table, CExecutor*)
+    cdef cppclass CTableSourceNodeOptions "arrow::compute::TableSourceNodeOptions"(CExecNodeOptions):
+        CTableSourceNodeOptions(shared_ptr[CTable] table, int64_t max_batch_size)
 
     cdef cppclass CSinkNodeOptions "arrow::compute::SinkNodeOptions"(CExecNodeOptions):
         pass
@@ -2496,6 +2500,8 @@ cdef extern from "arrow/compute/exec/exec_plan.h" namespace "arrow::compute" nog
         CStatus StartProducing()
         CStatus Validate()
         CStatus StopProducing()
+
+        CFuture_Void finished()
 
         vector[CExecNode*] sinks() const
         vector[CExecNode*] sources() const
